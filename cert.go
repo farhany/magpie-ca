@@ -3,19 +3,19 @@ package main
 import "encoding/pem"
 import "crypto/x509"
 import "crypto/x509/pkix"
-import "crypto/rsa"
 import mathRand "math/rand"
 import "crypto/rand"
+import "crypto"
 import "math/big"
 import "time"
 
-func loadPublicKey(input []byte) *rsa.PublicKey {
+func LoadPublicKey(input []byte) *crypto.PublicKey {
   block, _ := pem.Decode(input)
   result, _ := x509.ParsePKIXPublicKey(block.Bytes)
-  return result.(*rsa.PublicKey)
+  return result.(*crypto.PublicKey)
 }
 
-func Certify(ca *CA, public *rsa.PublicKey, subject pkix.Name, days time.Duration) []byte {
+func Certify(ca *CA, public *crypto.PublicKey, subject pkix.Name, days time.Duration) []byte {
   certificate := x509.Certificate {
     Version: 3,
     PublicKeyAlgorithm: x509.RSA,
@@ -32,6 +32,7 @@ func Certify(ca *CA, public *rsa.PublicKey, subject pkix.Name, days time.Duratio
   }
   certificate.NotAfter = certificate.NotBefore.Add(time.Hour * 24 * days)
 
-  result, _ := x509.CreateCertificate(rand.Reader, &certificate, &ca.Certificate, ca.Key, ca.Key.Public())
+  der, _ := x509.CreateCertificate(rand.Reader, &certificate, &ca.Certificate, ca.Key.Public(), ca.Key)
+  result := pem.EncodeToMemory(&pem.Block {Type: "CERTIFICATE", Bytes: der})
   return result
 }
