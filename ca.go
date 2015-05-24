@@ -6,6 +6,9 @@ import "crypto/x509"
 import "crypto/x509/pkix"
 import "math/big"
 import "time"
+import "encoding/pem"
+import "io/ioutil"
+import "os"
 
 type CA struct {
   Certificate [] byte
@@ -35,6 +38,21 @@ func (self *CA) Generate(issuer *pkix.Name, days time.Duration, bits int) {
   return
 }
 
-func (self *CA) Save() {
+func (self *CA) PublicPEM() []byte {
+  publicBytes, _ := x509.MarshalPKIXPublicKey(self.Key.Public())
+  return pem.EncodeToMemory(&pem.Block {Type: "RSA PUBLIC KEY", Bytes: publicBytes})
+}
 
+func (self *CA) PrivatePEM() []byte {
+  privateBytes := x509.MarshalPKCS1PrivateKey(self.Key)
+  return pem.EncodeToMemory(&pem.Block {Type: "RSA PRIVATE KEY", Bytes: privateBytes})
+}
+
+func (self *CA) CertPEM() []byte {
+  return pem.EncodeToMemory(&pem.Block {Type: "CERTIFICATE", Bytes: self.Certificate})
+}
+
+func (self *CA) Save() {
+  ioutil.WriteFile("private.pem", self.PrivatePEM(), os.ModePerm)
+  ioutil.WriteFile("cert.pem", self.CertPEM(), os.ModePerm)
 }

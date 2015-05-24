@@ -12,4 +12,5 @@ func main() {
   var ca CA
 
   ca.Generate(&issuer, 365, 2048)
+  ca.Save()
 }
