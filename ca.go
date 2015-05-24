@@ -48,11 +48,27 @@ func (self *CA) PrivatePEM() []byte {
   return pem.EncodeToMemory(&pem.Block {Type: "RSA PRIVATE KEY", Bytes: privateBytes})
 }
 
+func (self *CA) LoadPrivatePEM(input []byte) {
+  self.Key, _ = x509.ParsePKCS1PrivateKey(input)
+}
+
 func (self *CA) CertPEM() []byte {
   return pem.EncodeToMemory(&pem.Block {Type: "CERTIFICATE", Bytes: self.Certificate})
+}
+
+func (self *CA) LoadCertPEM(input []byte) {
+  self.Certificate = input
 }
 
 func (self *CA) Save() {
   ioutil.WriteFile("private.pem", self.PrivatePEM(), os.ModePerm)
   ioutil.WriteFile("cert.pem", self.CertPEM(), os.ModePerm)
+}
+
+func (self *CA) Load() {
+  privateInput, _ := ioutil.ReadFile("private.pem")
+  self.LoadPrivatePEM(privateInput)
+
+  certInput, _ := ioutil.ReadFile("cert.pem")
+  self.LoadCertPEM(certInput)
 }
