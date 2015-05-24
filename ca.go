@@ -11,7 +11,7 @@ import "io/ioutil"
 import "os"
 
 type CA struct {
-  Certificate [] byte
+  Certificate []byte
   Key *rsa.PrivateKey
 }
 
@@ -40,7 +40,7 @@ func (self *CA) Generate(issuer *pkix.Name, days time.Duration, bits int) {
 
 func (self *CA) PublicPEM() []byte {
   publicBytes, _ := x509.MarshalPKIXPublicKey(self.Key.Public())
-  return pem.EncodeToMemory(&pem.Block {Type: "RSA PUBLIC KEY", Bytes: publicBytes})
+  return pem.EncodeToMemory(&pem.Block {Type: "PUBLIC KEY", Bytes: publicBytes})
 }
 
 func (self *CA) PrivatePEM() []byte {
