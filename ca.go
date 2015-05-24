@@ -11,14 +11,15 @@ import "io/ioutil"
 import "os"
 
 type CA struct {
-  Certificate []byte
+  Certificate x509.Certificate
+  CertificateDER []byte
   Key *rsa.PrivateKey
 }
 
 func (self *CA) Generate(issuer *pkix.Name, days time.Duration, bits int) {
   self.Key, _ = rsa.GenerateKey(rand.Reader, bits)
 
-  cert := x509.Certificate {
+  self.Certificate = x509.Certificate {
     Version: 3,
     PublicKeyAlgorithm: x509.RSA,
     SignatureAlgorithm: x509.SHA256WithRSA,
@@ -32,10 +33,8 @@ func (self *CA) Generate(issuer *pkix.Name, days time.Duration, bits int) {
     KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
   }
 
-  cert.NotAfter = cert.NotBefore.Add(time.Hour * 24 * days)
-
-  self.Certificate, _ = x509.CreateCertificate(rand.Reader, &cert, &cert, self.Key.Public(), self.Key)
-  return
+  self.Certificate.NotAfter = self.Certificate.NotBefore.Add(time.Hour * 24 * days)
+  self.CertificateDER, _ = x509.CreateCertificate(rand.Reader, &self.Certificate, &self.Certificate, self.Key.Public(), self.Key)
 }
 
 func (self *CA) PublicPEM() []byte {
@@ -49,15 +48,20 @@ func (self *CA) PrivatePEM() []byte {
 }
 
 func (self *CA) LoadPrivatePEM(input []byte) {
-  self.Key, _ = x509.ParsePKCS1PrivateKey(input)
+  data, _ := pem.Decode(input)
+  self.Key, _ = x509.ParsePKCS1PrivateKey(data.Bytes)
 }
 
 func (self *CA) CertPEM() []byte {
-  return pem.EncodeToMemory(&pem.Block {Type: "CERTIFICATE", Bytes: self.Certificate})
+  return pem.EncodeToMemory(&pem.Block {Type: "CERTIFICATE", Bytes: self.CertificateDER})
 }
 
 func (self *CA) LoadCertPEM(input []byte) {
-  self.Certificate = input
+  data, _ := pem.Decode(input)
+  self.CertificateDER = data.Bytes
+
+  certs, _ := x509.ParseCertificates(self.CertificateDER)
+  self.Certificate = *certs[0]
 }
 
 func (self *CA) Save() {
