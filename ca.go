@@ -16,7 +16,7 @@ type CA struct {
   Key *rsa.PrivateKey
 }
 
-func (self *CA) Generate(issuer *pkix.Name, days time.Duration, bits int) {
+func (self *CA) Generate(issuer pkix.Name, days time.Duration, bits int) {
   self.Key, _ = rsa.GenerateKey(rand.Reader, bits)
 
   self.Certificate = x509.Certificate {
@@ -25,8 +25,8 @@ func (self *CA) Generate(issuer *pkix.Name, days time.Duration, bits int) {
     SignatureAlgorithm: x509.SHA256WithRSA,
     PublicKey: self.Key.Public(),
     SerialNumber: big.NewInt(1),
-    Issuer: *issuer,
-    Subject: *issuer,
+    Issuer: issuer,
+    Subject: issuer,
     NotBefore: time.Now(),
     BasicConstraintsValid: true,
     IsCA: true,
@@ -35,6 +35,10 @@ func (self *CA) Generate(issuer *pkix.Name, days time.Duration, bits int) {
 
   self.Certificate.NotAfter = self.Certificate.NotBefore.Add(time.Hour * 24 * days)
   self.CertificateDER, _ = x509.CreateCertificate(rand.Reader, &self.Certificate, &self.Certificate, self.Key.Public(), self.Key)
+}
+
+func (self *CA) GetIssuer() pkix.Name {
+  return self.Certificate.Subject
 }
 
 func (self *CA) PublicPEM() []byte {
