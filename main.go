@@ -1,7 +1,6 @@
 package main
 
 import "crypto/x509/pkix"
-import "fmt"
 
 func main() {
   issuer := pkix.Name {
@@ -10,7 +9,7 @@ func main() {
     CommonName: "MagpieCA",
   }
 
-  der, key := GenerateCA(&issuer, 365, 2048)
-  fmt.Println(der)
-  fmt.Println(key)
+  var ca CA
+
+  ca.Generate(&issuer, 365, 2048)
 }
